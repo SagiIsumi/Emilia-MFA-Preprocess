@@ -44,3 +44,10 @@ uv run python ./src/Audio_pretrin/timestamping/MFA.py
 REMEBER! Please changes arguments in setting area in MFA.py.
 I know the hard-code is not good-looking, but it is a tailored script for Emilia preprocessing, 
 I am lazy use argparse or OmegaConf. That is all.
+
+### Note
+BTW, if you want to check the accuracy of the timestamping, it is recommanded to use praat.
+the GUI looks like this:
+<p align="center">
+  <img src="docs/praat_demo.png" width="300">
+</p>
