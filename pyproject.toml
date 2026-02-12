@@ -1,0 +1,38 @@
+[project]
+name = "emilia-mfa-preprocess"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "huggingface>=0.0.1",
+    "huggingface-hub>=1.4.1",
+    "numpy<2.0",
+    "opencc>=1.2.0",
+    "pypinyin>=0.55.0",
+    "textgrid>=1.6.1",
+    "torch==2.8.0",
+    "torchaudio==2.8.0",
+    "transformers>=5.1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/Audio_pretrain",
+]
+
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.9",
+]
+
+[tool.ruff]
+line-length = 121  # 依照自己的專案需求設定
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]  # 至少會加入 I，因為 isort 是必要的
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
