@@ -209,4 +209,4 @@ __marimo__/
 # Customized ignores
 ckpts/
 logs/
-/home/isumi/Desktop/Emilia-MFA-Preprocess/mfa_outputs
+mfa_outputs/
