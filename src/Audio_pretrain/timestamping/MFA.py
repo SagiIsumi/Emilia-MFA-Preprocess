@@ -1,3 +1,4 @@
+import gc
 import json
 import logging
 import os
@@ -85,7 +86,7 @@ def run_mfa(temp_dir: str, out_dir: str, model_name: str):
     logger.info(f"Step 2: 執行 MFA 對齊. 輸入: {temp_dir}")
     cmd = [
         "mfa", "align", str(temp_dir), model_name, model_name, str(out_dir),
-        "--clean", "--beam", "40", "--retry-beam", "400", "--j", "4"
+        "--clean", "--beam", "40", "--retry-beam", "150", "--j", "4"
     ]
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -138,6 +139,29 @@ def language_ratio(text):
         return "en"
     return "hybrid"
 
+def purge_mfa_working_dirs():
+    """專門清理導致長跑崩潰的資料庫與暫存，保留模型檔案"""
+    mfa_root = Path("~/Documents/MFA").expanduser()
+    
+    # 根據你的 ls 結果，這些是會產生 zh.db 與暫存的地方
+    # 當你處理英文時，請把 "en" 也加入
+    dirs_to_purge = ["zh", "en", "temp", "joblib_cache"]
+    
+    for d in dirs_to_purge:
+        target = mfa_root / d
+        if target.exists():
+            try:
+                shutil.rmtree(target)
+                print(f"🧹 已清除對齊快取: {target.name}")
+            except Exception as e:
+                # 有時因為權限或鎖定會失敗，我們記錄下來
+                print(f"⚠️ 無法清理 {target.name}: {e}")
+
+    # 另外特別檢查 command_history 這種會緩慢增長的檔案
+    history_file = mfa_root / "command_history.yaml"
+    if history_file.exists():
+        history_file.unlink()
+
 if __name__ == "__main__":
     processed_ids = load_checkpoints(CHECKPOINT_FILE)
     logger.info(f"已從 Checkpoint 載入 {len(processed_ids)} 筆資料，將跳過已處理項。")
@@ -148,6 +172,9 @@ if __name__ == "__main__":
         if str(tar_path) in processed_ids:
             logger.info(f"跳過已處理檔案: {tar_path.name}")
             continue
+        
+        # 清除長期快取
+        purge_mfa_working_dirs()
         
         logger.info(f"開始處理檔案: {tar_path.name}")
         pair_generator = iter_emilia_tar(tar_path=tar_path)
@@ -282,7 +309,6 @@ if __name__ == "__main__":
                 
                 # 3. [Streaming] 寫入 WebDataset Tar (如果需要)
                 write_webdataset_sample(tar_handle, sample_id, wav_bytes, metadata)
-                
-        breakpoint()
         save_checkpoint(CHECKPOINT_FILE, str(tar_path))
+        gc.collect()  # 嘗試釋放記憶體，尤其是在處理大型檔案後
     logger.info("本批次任務執行完畢。")
